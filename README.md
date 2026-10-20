@@ -1,5 +1,23 @@
 # Agentic AI with Claude Agent SDK + Amazon Bedrock AgentCore
 
+> [!NOTE]
+> **About this fork.** This is a fork of [aws-samples/sample-agentic-ai-with-claude-agent-sdk-and-amazon-bedrock-agentcore](https://github.com/aws-samples/sample-agentic-ai-with-claude-agent-sdk-and-amazon-bedrock-agentcore). The upstream repository targets Workshop Studio, and its constraints keep these changes out of upstream. This fork adapts the **foundations** track (modules 1-4) for running in your own AWS account with current tooling. The `advanced/` track is unchanged.
+>
+> What this fork changes (details in [issue #10](https://github.com/aws-samples/sample-agentic-ai-with-claude-agent-sdk-and-amazon-bedrock-agentcore/issues/10)):
+>
+> - **SDK:** `claude-agent-sdk` 0.2.168 instead of the yanked 0.2.88. Subagents run in the foreground (`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`), so answers that use them are complete, not an interim "still working" reply ([#11](https://github.com/aws-samples/sample-agentic-ai-with-claude-agent-sdk-and-amazon-bedrock-agentcore/pull/11)).
+> - **CDK:** the CDK projects build with AgentCore CLI 0.31 (`@aws/agentcore-cdk` 0.1.0-alpha.54), and `setup.sh` installs CLI 0.31.1 ([#12](https://github.com/aws-samples/sample-agentic-ai-with-claude-agent-sdk-and-amazon-bedrock-agentcore/pull/12)).
+> - **Notebooks:** the account cells use the `AWS_PROFILE` from `.env` and fail loudly instead of writing an empty account. The module 4 span cell also finds spans in the runtime's log group ([#13](https://github.com/aws-samples/sample-agentic-ai-with-claude-agent-sdk-and-amazon-bedrock-agentcore/pull/13)).
+> - **Models:** Claude Sonnet 5.5 and Claude Haiku 5.5 by default ([#14](https://github.com/aws-samples/sample-agentic-ai-with-claude-agent-sdk-and-amazon-bedrock-agentcore/pull/14)).
+> - **Clean-up:** each module ends with an opt-in clean-up section, off by default (`RUN_CLEANUP = False`) ([#15](https://github.com/aws-samples/sample-agentic-ai-with-claude-agent-sdk-and-amazon-bedrock-agentcore/pull/15)).
+> - **Small fixes** ([#16](https://github.com/aws-samples/sample-agentic-ai-with-claude-agent-sdk-and-amazon-bedrock-agentcore/pull/16)):
+>   - `WebSearch` is removed, because Claude Code doesn't offer it on Bedrock.
+>   - Deployed agents stream only the model's replies.
+>   - The audit logs are no longer tracked.
+>   - Doc updates.
+>
+> Tested end to end (modules 1-4, including clean-up) in us-west-2 with AgentCore CLI 0.31.1 and Python 3.11. It needs Node.js 20+ and AgentCore CLI 0.31.0 or newer. If you're taking the hosted workshop, follow upstream instead.
+
 A hands-on workshop that progressively builds, deploys, and operationalizes AI agents using the [Claude Agent SDK](https://docs.anthropic.com/en/docs/agents-and-tools/claude-agent-sdk) and [Amazon Bedrock AgentCore](https://aws.amazon.com/bedrock/agentcore/).
 
 ## Workshop structure
