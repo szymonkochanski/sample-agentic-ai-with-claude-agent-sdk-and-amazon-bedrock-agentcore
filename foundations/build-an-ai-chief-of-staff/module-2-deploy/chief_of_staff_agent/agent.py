@@ -56,7 +56,7 @@ def build_agent_options(
     No ``model=`` is set — this workshop runs on Amazon Bedrock and the model comes
     from the ``ANTHROPIC_MODEL`` env var (with ``CLAUDE_CODE_USE_BEDROCK=1``).
     """
-    tools = ["Task", "Read", "Write", "Edit", "Bash"]
+    tools = ["Agent", "Read", "Write", "Edit", "Bash"]  # "Agent" was called "Task" in older Claude Code
     if extra_tools:
         tools = tools + extra_tools
 

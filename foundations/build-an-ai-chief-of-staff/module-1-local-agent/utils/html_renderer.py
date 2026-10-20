@@ -50,6 +50,10 @@ try:
 except ImportError:
     pass
 
+# Tool names that start a subagent. Claude Code renamed the Task tool to Agent; older
+# releases (and transcripts recorded with them) still use Task, so accept both.
+SUBAGENT_TOOL_NAMES = ("Agent", "Task")
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # CSS Constants
@@ -563,7 +567,7 @@ def visualize_conversation_html(messages: list[Any]) -> None:
                     tool_name = block.name
                     tool_input = block.input if hasattr(block, "input") else {}
 
-                    if tool_name == "Task":
+                    if tool_name in SUBAGENT_TOOL_NAMES:
                         flush_tools()
                         subagent_type = (
                             tool_input.get("subagent_type", "unknown") if tool_input else "unknown"

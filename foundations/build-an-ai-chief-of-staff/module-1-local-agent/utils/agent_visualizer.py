@@ -30,7 +30,11 @@ Example usage::
 
 from typing import Any
 
-from utils.html_renderer import display_agent_response, visualize_conversation_html
+from utils.html_renderer import (
+    SUBAGENT_TOOL_NAMES,
+    display_agent_response,
+    visualize_conversation_html,
+)
 
 __all__ = [
     "display_agent_response",
@@ -142,8 +146,8 @@ def print_activity(msg: Any) -> None:
             first_block = msg.content[0]
             tool_name = first_block.name if hasattr(first_block, "name") else None
 
-            if tool_name == "Task":
-                # Extract subagent details from the Task tool input
+            if tool_name in SUBAGENT_TOOL_NAMES:
+                # Extract subagent details from the Agent (formerly Task) tool input
                 if hasattr(first_block, "input") and first_block.input:
                     subagent_type = first_block.input.get("subagent_type", "unknown")
                     description = first_block.input.get("description", "")
@@ -413,7 +417,7 @@ def visualize_conversation(messages: list[Any]) -> None:
                     tool_name = block.name
                     tool_input = block.input if hasattr(block, "input") else {}
 
-                    if tool_name == "Task":
+                    if tool_name in SUBAGENT_TOOL_NAMES:
                         # Flush pending tools
                         flush_pending_tools("   " if in_subagent else "")
 

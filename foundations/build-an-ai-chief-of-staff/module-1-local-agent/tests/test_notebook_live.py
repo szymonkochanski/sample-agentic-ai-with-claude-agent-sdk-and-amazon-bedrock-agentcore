@@ -64,13 +64,13 @@ def test_audit_ledger_grew_and_logged_scripts(executed_notebook):
 
 # ──────────────────────────────────────────── subagent delegation
 def test_subagent_delegation_visible(executed_notebook):
-    """The subagent cell delegates via Task; print_activity prints a 'Delegating to subagent' line
-    (Task is its own message block, so this rendered signal is reliable here)."""
+    """The subagent cell delegates via the Agent tool (formerly Task); print_activity prints a
+    'Delegating to subagent' line (the tool call is its own message block, so this rendered signal
+    is reliable here). Checking only for the subagent's name would miss a visualizer that no longer
+    recognises the tool, which happened when Claude Code renamed Task to Agent."""
     cell = _find_cell(executed_notebook, "Delegate to the financial-analyst")
     out = cell_text_outputs(cell)
-    assert ("Delegating to subagent" in out) or ("financial-analyst" in out), (
-        "no sign the financial-analyst subagent was invoked"
-    )
+    assert "Delegating to subagent" in out, "the financial-analyst delegation was not rendered"
 
 
 # ──────────────────────────────────────────── report write + tracker hook

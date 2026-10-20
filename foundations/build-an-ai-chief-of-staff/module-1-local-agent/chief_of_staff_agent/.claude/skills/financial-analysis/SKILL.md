@@ -32,7 +32,7 @@ Compute with the project scripts via **Bash** rather than estimating in your hea
 Each script prints JSON — parse it and use the exact numbers it returns.
 
 For an open-ended strategic trade-off (e.g. "should we hire or extend runway?"), you may delegate to the
-**financial-analyst** subagent via the Task tool for deeper modeling. Use this skill for the standard
+**financial-analyst** subagent via the Agent tool for deeper modeling. Use this skill for the standard
 runway/burn/forecast/hiring questions; delegate only when the analysis is genuinely open-ended.
 
 ## Step 3 — Present in the standard structure

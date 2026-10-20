@@ -68,7 +68,7 @@ def test_setting_sources_present_for_filesystem_features(nb):
     """Cells that rely on CLAUDE.md/skills/subagents/commands must load project settings."""
     for c in code_cells(nb):
         src = c.source
-        needs_project = any(tok in src for tok in ('"Skill"', '"Task"', "outputStyle", "/budget-impact"))
+        needs_project = any(tok in src for tok in ('"Skill"', '"Agent"', '"Task"', "outputStyle", "/budget-impact"))
         if needs_project and "ClaudeAgentOptions" in src:
             assert 'setting_sources=["project"]' in src, (
                 f"cell uses a project feature but omits setting_sources=['project']:\n{src[:200]}"
