@@ -1,16 +1,27 @@
 """
 Chief of Staff Agent
+
+Run from a terminal, from the module directory (reads its .env: CLAUDE_CODE_USE_BEDROCK,
+ANTHROPIC_MODEL, ANTHROPIC_SMALL_FAST_MODEL, AWS_REGION, AWS_PROFILE):
+
+    cd module-1-local-agent
+    uv run python chief_of_staff_agent/agent.py "What is our current runway?"
+    uv run python chief_of_staff_agent/agent.py --continue "And if we hire 3 more engineers?"
+    uv run python chief_of_staff_agent/agent.py --output-style executive "Summarise our burn rate"
 """
 
+import argparse
 import asyncio
 import json
 import os
+import sys
 from collections.abc import Callable
 from typing import Any, Literal
 
 from dotenv import load_dotenv
 
 from claude_agent_sdk import ClaudeAgentOptions, ClaudeSDKClient
+from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock, ToolResultBlock, ToolUseBlock
 
 load_dotenv()
 
@@ -79,27 +90,22 @@ def build_agent_options(
     return ClaudeAgentOptions(**defaults)
 
 
-def get_activity_text(msg: Any) -> str | None:
-    """Extract activity text from a message"""
-    try:
-        if "Assistant" in msg.__class__.__name__:
-            if hasattr(msg, "content") and msg.content:
-                first_content = msg.content[0] if isinstance(msg.content, list) else msg.content
-                if hasattr(first_content, "name"):
-                    return f"🤖 Using: {first_content.name}()"
-            return "🤖 Thinking..."
-        elif "User" in msg.__class__.__name__:
-            return "✓ Tool completed"
-    except (AttributeError, IndexError):
-        pass
-    return None
-
-
 def print_activity(msg: Any) -> None:
-    """Print activity to console"""
-    activity = get_activity_text(msg)
-    if activity:
-        print(activity)
+    """Print activity to console: model text, tool calls and results, final cost"""
+
+    def short(text: Any) -> str:  # one line, max 120 chars, paths relative to the agent dir
+        return " ".join(str(text).replace(AGENT_DIR, ".").split())[:120]
+
+    indent = "    " if getattr(msg, "parent_tool_use_id", None) else ""  # subagent activity
+    for block in msg.content if isinstance(getattr(msg, "content", None), list) else []:
+        if isinstance(block, TextBlock) and isinstance(msg, AssistantMessage):
+            print(f"{indent}💬 {short(block.text)}")
+        elif isinstance(block, ToolUseBlock):
+            print(f"{indent}🔧 {block.name}: {short(json.dumps(block.input))}")
+        elif isinstance(block, ToolResultBlock):
+            print(f"{indent}{'❌' if block.is_error else '✓'} {short(block.content)}")
+    if isinstance(msg, ResultMessage):
+        print(f"🏁 Done in {msg.duration_ms / 1000:.1f}s, {msg.num_turns} turns, ${msg.total_cost_usd or 0:.4f}")
 
 
 async def send_query(
@@ -159,3 +165,51 @@ async def send_query(
         raise
 
     return result, messages
+
+
+def _main() -> None:
+    """Command-line entrypoint: run one query with send_query() and print the answer."""
+    styles_dir = os.path.join(AGENT_DIR, ".claude", "output-styles")
+    styles = sorted(f.removesuffix(".md") for f in os.listdir(styles_dir) if f.endswith(".md"))
+
+    parser = argparse.ArgumentParser(description="Ask the Chief of Staff agent a question.")
+    parser.add_argument(
+        "prompt", nargs="+", help="the query (quotes optional; slash commands like /budget-impact work)"
+    )
+    parser.add_argument(
+        "--continue",
+        dest="continue_conversation",
+        action="store_true",
+        help="continue the most recent conversation of this agent",
+    )
+    parser.add_argument(
+        "--output-style", metavar="NAME", help=f"output style from .claude/output-styles: {', '.join(styles)}"
+    )
+    parser.add_argument(
+        "--permission-mode",
+        choices=["default", "plan", "acceptEdits"],
+        default="default",
+        help='"default" (execute, the default), "plan" (think only) or "acceptEdits"',
+    )
+    args = parser.parse_args()
+
+    # The agent runs `python scripts/...` via Bash: put this interpreter's bin dir
+    # (e.g. .venv/bin) first on PATH so that works without an activated venv.
+    os.environ["PATH"] = os.path.dirname(sys.executable) + os.pathsep + os.environ.get("PATH", "")
+
+    result, _ = asyncio.run(
+        send_query(
+            " ".join(args.prompt),
+            continue_conversation=args.continue_conversation,
+            permission_mode=args.permission_mode,
+            output_style=args.output_style,
+        )
+    )
+    if result is None:
+        print("No result returned by the agent.", file=sys.stderr)
+        sys.exit(1)
+    print(f"\n{'─' * 60}\n{result}")
+
+
+if __name__ == "__main__":
+    _main()
